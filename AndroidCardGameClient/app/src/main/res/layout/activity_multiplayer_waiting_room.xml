@@ -42,17 +42,9 @@
                 android:textColor="@color/black"
                 android:textAllCaps="true"
                 android:textSize="30sp"
-                android:paddingBottom="20dp"
+                android:paddingBottom="0dp"
                 />
 
-            <TextView
-                android:id="@+id/statusMessage"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Multiplayer Options"
-                android:textColor="@color/black"
-                android:textSize="16sp"
-                />
 
         </LinearLayout>
 

@@ -16,15 +16,13 @@ import android.os.Handler;
 public class MultiplayerWaitingRoom extends AppCompatActivity {
 
     MultiPlayerConnector _MultiPlayerConnector;
-    Handler _UIHandler;
+    public Handler _UIHandler;
     String _GameType;
 
 static class PlayerStatus{
     static boolean _initiator =false;
     static String _PlayerName;
 }
-
-
 
 
     @Override
@@ -65,7 +63,7 @@ static class PlayerStatus{
                 // We use a String here, but any type that can be put in a Bundle is supported
                 String fragmentClassName = bundle.getString("fragmentClassName");
                 // Do something with the result
-                changeFragment(fragmentClassName);
+                changeFragment(fragmentClassName,bundle);
             }
         });
 
@@ -81,7 +79,7 @@ static class PlayerStatus{
         PlayerStatus._initiator=false;
     }
 
-    protected void changeFragment(String className){
+    protected void changeFragment(String className, Bundle bundle){
         Class fragmentClass = null;
         try {
             fragmentClass = Class.forName(className);
@@ -91,7 +89,7 @@ static class PlayerStatus{
 
         getSupportFragmentManager().beginTransaction()
                 .addToBackStack(null)
-                .replace(R.id.fragment_container_view, fragmentClass, null)
+                .replace(R.id.fragment_container_view, fragmentClass, bundle)
                 .commit();
 
     }

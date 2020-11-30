@@ -21,8 +21,8 @@ public class SelectPublicOrPrivateFragment extends Fragment {
     @Override
     public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
         super.onViewStateRestored(savedInstanceState);
-        TextView statusMessage =getActivity().findViewById(R.id.statusMessage);
-        statusMessage.setText("Multiplayer Options");
+       
+
     }
 
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {

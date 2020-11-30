@@ -14,13 +14,11 @@ public class PrivateGameOptionButtons extends Fragment {
         super(R.layout.fragment_private_options_buttons);
     }
 
-    String _DefaultFragmentStatusMessage ="Private Game Options";
+
 
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        TextView statusMessage = getActivity().findViewById(R.id.statusMessage);
 
-        statusMessage.setText(_DefaultFragmentStatusMessage);
 
 
         Button createButton = view.findViewById(R.id.createPrivateButton);
@@ -34,11 +32,11 @@ public class PrivateGameOptionButtons extends Fragment {
                 //_ParentActivity._MultiPlayerConnector.joinToPublicGame(2, _ParentActivity._GameType);
 
                 Bundle result = new Bundle();
-                result.putString("fragmentClassName", PrivateGameWaitingRoomFragment.class.getCanonicalName());
+                result.putString("fragmentClassName", CreatePrivateGameFragment.class.getCanonicalName());
                 result.putBoolean("gameCreator", true);
                 // The child fragment needs to still set the result on its parent fragment manager
                 getParentFragmentManager().setFragmentResult("changeFragment", result);
-                getParentFragmentManager().setFragmentResult("setGameCreator", result);
+                //getParentFragmentManager().setFragmentResult("setGameCreator", result);
             }
 
 
@@ -50,6 +48,10 @@ public class PrivateGameOptionButtons extends Fragment {
                 //p2psocket.emit('public-game-room-request', {numPlayersRequiredForGame:2, gameType: 'fives'})
                 //_ParentActivity._MultiPlayerConnector.joinToPublicGame(2, _ParentActivity._GameType);
 
+                Bundle result = new Bundle();
+                result.putString("fragmentClassName", JoinPrivateGameFragment.class.getCanonicalName());
+                result.putBoolean("gameCreator", false);
+                getParentFragmentManager().setFragmentResult("changeFragment", result);
                /* Bundle result = new Bundle();
                 result.putString("fragmentClassName", Public.class.getCanonicalName());
                 // The child fragment needs to still set the result on its parent fragment manager
