@@ -3,15 +3,13 @@ package com.example.cardgameclient;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
-public class PrivateGameOptionButtons extends Fragment {
-    public PrivateGameOptionButtons() {
-        super(R.layout.fragment_private_options_buttons);
+public class PrivateGameOptionsFragment extends Fragment {
+    public PrivateGameOptionsFragment() {
+        super(R.layout.fragment_private_options);
     }
 
 
@@ -36,7 +34,7 @@ public class PrivateGameOptionButtons extends Fragment {
                 result.putBoolean("gameCreator", true);
                 // The child fragment needs to still set the result on its parent fragment manager
                 getParentFragmentManager().setFragmentResult("changeFragment", result);
-                //getParentFragmentManager().setFragmentResult("setGameCreator", result);
+
             }
 
 
@@ -63,4 +61,6 @@ public class PrivateGameOptionButtons extends Fragment {
 
 
     }
+
+
 }

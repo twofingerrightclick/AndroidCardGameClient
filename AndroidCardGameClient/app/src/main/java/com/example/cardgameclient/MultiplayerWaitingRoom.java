@@ -7,19 +7,31 @@ import androidx.annotation.NonNull;
 
 import com.google.android.material.snackbar.Snackbar;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.FragmentResultListener;
 
 import android.os.Handler;
+import android.widget.TextView;
 
-public class MultiplayerWaitingRoom extends AppCompatActivity {
+import java.util.Observable;
+import java.util.Observer;
+
+public class MultiplayerWaitingRoom extends AppCompatActivity implements IPublicGameWaitingRoomFragmentUIEvent, IPrivateGameWaitingRoomFragmentUIEvent, IJoinPrivateGameUIEvent {
 
     MultiPlayerConnector _MultiPlayerConnector;
     public Handler _UIHandler;
-    String _GameType;
+    public static String _GameType="fives";
+    public static int _MinNumPlayersRequiredForGame = 2;
 
-static class PlayerStatus{
+    String _CurrentFragmentClassName;
+
+    String _GameCode="";
+
+
+
+    static class PlayerStatus{
     static boolean _initiator =false;
     static String _PlayerName;
 }
@@ -38,7 +50,7 @@ static class PlayerStatus{
         Intent intent = getIntent();
         _GameType = intent.getStringExtra(MainActivity.GAME_TYPE);
         _MultiPlayerConnector = new MultiPlayerConnector();
-        //multiPlayerConnector.addObserver(MultiPlayerConnectorObserver);
+        _MultiPlayerConnector.addObserver(_MultiPlayerConnectorObserver);
 
 
         if (savedInstanceState == null) {
@@ -62,18 +74,23 @@ static class PlayerStatus{
             public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle bundle) {
                 // We use a String here, but any type that can be put in a Bundle is supported
                 String fragmentClassName = bundle.getString("fragmentClassName");
+                _CurrentFragmentClassName=fragmentClassName;
                 // Do something with the result
                 changeFragment(fragmentClassName,bundle);
             }
         });
 
-        getSupportFragmentManager().setFragmentResultListener("setGameCreator", this, new FragmentResultListener() {
+        getSupportFragmentManager().setFragmentResultListener("emitEvent", this, new FragmentResultListener() {
             @Override
             public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle bundle) {
-               PlayerStatus._initiator=true;
+                String eventName = bundle.getString("eventName");
+                boolean emitWithObject = bundle.getBoolean("emitWithObject",false);
+                _MultiPlayerConnector.emitEvent(eventName, emitWithObject);
             }
         });
     }
+
+
 
     private void resetPlayerStatus(){
         PlayerStatus._initiator=false;
@@ -97,44 +114,120 @@ static class PlayerStatus{
 
 
 
+    @Override
+    public void OnPrivateRoomJoin() {
+        Bundle result = new Bundle();
+        result.putString("fragmentClassName", PrivateGameWaitingRoomFragment.class.getCanonicalName());
+        result.putBoolean("gameCreator", false);
+        changeFragment(PrivateGameWaitingRoomFragment.class.getCanonicalName(),result);
+    }
+
+    @Override
+    public void OnRoomNotFound() {
+
+        _UIHandler.post(() -> {
+            new AlertDialog.Builder(this)
+                    .setTitle("Unable to find game")
+                    .setMessage("Check with your friend to make sure your game code is still active and correct.")
+                    // Specifying a listener allows you to take an action before dismissing the dialog.
+                    // The dialog is automatically dismissed when a dialog button is clicked.
+                    /* .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                         public void onClick(DialogInterface dialog, int which) {
+                             // Continue with delete operation
+                         }
+                     })*/
+
+                    // A null listener allows the button to dismiss the dialog and take no further action.
+                    .setNegativeButton(android.R.string.ok, null)
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .show();
+        });
+    }
 
 
-   /* private void showGameRoomCode() {
+    public void badInput(String message) {
 
-        _UIHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                TextView roomCodeView= findViewById(R.id.room_code);
-                roomCodeView.setText(multiPlayerConnector.getRoomCode());
+        _UIHandler.post(() -> {
+            new AlertDialog.Builder(this)
+                    .setTitle("Check Input")
+                    .setMessage(message)
+                    // Specifying a listener allows you to take an action before dismissing the dialog.
+                    // The dialog is automatically dismissed when a dialog button is clicked.
+                    /* .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                         public void onClick(DialogInterface dialog, int which) {
+                             // Continue with delete operation
+                         }
+                     })*/
 
-            }
+                    // A null listener allows the button to dismiss the dialog and take no further action.
+                    .setNegativeButton(android.R.string.ok, null)
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .show();
+        });
+    }
+
+
+    public void goToPrivateGameWaitingRoom() {
+
+        Bundle bundle = new Bundle();
+        bundle.putBoolean("gameCreator", true);
+        changeFragment(PrivateGameWaitingRoomFragment.class.getCanonicalName(),bundle);
+
+        _UIHandler.post(() -> {
+            TextView roomCodeView= findViewById(R.id.gameCodeView);
+            roomCodeView.setText(_MultiPlayerConnector.getRoomCode());
         });
 
-    }*/
+    }
 
 
- /*   private Observer MultiPlayerConnectorObserver = new Observer() {
+    private Observer _MultiPlayerConnectorObserver = new Observer() {
         @Override
         public void update(Observable o, Object arg) {
             switch ((String)arg){
-                case "game-room-request-complete":
-                    showGameRoomCode();
+                case ServerConfig.privateGameRoomRequestComplete:
+                    goToPrivateGameWaitingRoom();
                     break;
                 case ServerConfig.peerMsg:
-                    addPeerMessage();
+                    //addPeerMessage();
+                    break;
+                case ServerConfig.numActivePlayers:
+                    updatePublicWaitingRoomActivePlayerCount();
+                    break;
+                case ServerConfig.unableToFindRoom:
+                    OnRoomNotFound();
+                    break;
             }
         }
-    };*/
+    };
 
-   /* private void addPeerMessage() {
+  /*  private void addPeerMessage() {
 
         _UIHandler.post(new Runnable() {
             @Override
             public void run() {
                 TextView roomCodeView= findViewById(R.id.message_view);
-                roomCodeView.setText(multiPlayerConnector.msg);
+                roomCodeView.setText(_MultiPlayerConnector.msg);
 
             }
         });
     }*/
+
+        public void updatePublicWaitingRoomActivePlayerCount() {
+
+        _UIHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                TextView activePlayersTextView= findViewById(R.id.numActivePublicPlayers);
+                activePlayersTextView.setText(_MultiPlayerConnector._NumberActivePublicPlayers);
+
+            }
+        });
+
+    }
+
+    @Override
+    public void onGameReadyToPlay() {
+
+    }
 }

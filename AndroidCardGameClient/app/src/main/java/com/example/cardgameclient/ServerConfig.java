@@ -12,6 +12,9 @@ public class ServerConfig {
 
     public static final String privateGameRoomRequest = "private-game-room-request";
 
+    public static final String privateGameRoomRequestComplete = "private-game-room-request-complete";
+    public static final String publicGameRoomRequestComplete= "public-game-room-request-complete";
+
 
     //'game-room-request-complete'
     public static final String gameRoomRequestComplete = "game-room-request-complete";
@@ -23,7 +26,13 @@ public class ServerConfig {
     public static final String joinPrivateGameRoom = "join-private-game-room";
     public static final String unableToFindRoom = "unable-to-find-room";
 
+    public static final String getNumActivePlayers = "get-num-active-public-players";
+    public static final String numActivePlayers = "num-active-public-players";
+
+
     public static final String peerMsg ="peer-msg";
+
+    //public static final String startGame ="start-game";
 
 
 

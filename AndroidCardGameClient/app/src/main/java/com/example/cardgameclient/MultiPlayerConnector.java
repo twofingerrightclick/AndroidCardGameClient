@@ -26,9 +26,14 @@ public class MultiPlayerConnector extends Observable {
     private String serverUrl = (BuildConfig.DEBUG) ? ServerConfig.ServerURLDebug : ServerConfig.ServerURLProduction;
     private Socket _Socket;
 
+    static JSONObject _EmitObject;
+    public static final String emitWithObjectString="emitWithObject";
+
+
+    public int _NumberActivePublicPlayers;
     private String _RoomCode;
     public String getRoomCode() { return _RoomCode; }
-    private void setRoomCode(String roomCode) {
+    public void setRoomCode(String roomCode) {
         setChanged();
         this._RoomCode = roomCode;
     }
@@ -50,15 +55,15 @@ public class MultiPlayerConnector extends Observable {
             opts.transports = new String[] { WebSocket.NAME };
             _Socket = IO.socket(serverUrl); //put url in config resource file
 
+            PublicGameWaitingRoom.AddSocketEvents(_Socket,this);
+            JoinPrivateGameFragment.AddSocketEvents(_Socket,this);
+            CreatePrivateGameFragment.AddSocketEvents(_Socket,this);
+
             _Socket.on(EVENT_CONNECT,  args-> {
                     //JSONObject obj = (JSONObject)args[0];
                     Log.d(TAG, "Connected to server");
                 }).on("public-game-room-request", args -> {
                 Log.d(TAG, "requesting public game room");
-            }).on("game-room-request-complete", args -> {
-                Log.d(TAG, "game room request complete");
-                setRoomCode(((JSONObject)args[0]).opt("gameRoomName").toString());
-                notifyObservers(ServerConfig.gameRoomRequestComplete);
             }).on(EVENT_CONNECT_ERROR, args ->{
                 Log.d(TAG,"failed to connect:");
                 for(int i =0; i<args.length; i++){
@@ -135,28 +140,32 @@ public class MultiPlayerConnector extends Observable {
         }
     }
 
+
     @Override
     public void notifyObservers(Object arg) {
+        setChanged();
         super.notifyObservers(arg);
+
     }
 
 
 
-    public void joinToPublicGame(int i, String gameType){
+    public void emitEvent(String emitEvent, boolean emitWithObject) {
+        if (emitWithObject){
+            _Socket.emit(emitEvent,_EmitObject);
+        }
+        else _Socket.emit(emitEvent);
+    }
 
-        JSONObject obj = new JSONObject();
-        try {
-            obj.put("numPlayersRequiredForGame", i);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        try {
-            obj.put("gameType", gameType);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        _Socket.emit("public-game-room-request", obj);
-        Log.d(TAG, "requesting public game room");
+    public void emitEvent(String emitEvent, JSONObject obj) {
+
+            _Socket.emit(emitEvent,obj);
+
+    }
+
+    public void emitEvent(String emitEvent) {
+
+        _Socket.emit(emitEvent);
 
     }
 }
