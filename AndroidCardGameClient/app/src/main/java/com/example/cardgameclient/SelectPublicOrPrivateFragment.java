@@ -1,7 +1,6 @@
 package com.example.cardgameclient;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
@@ -10,14 +9,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import io.socket.client.Socket;
 
-public class SelectPublicOrPrivateFragment extends Fragment implements IMultiplayerConnectorEventUser {
+public class SelectPublicOrPrivateFragment extends Fragment implements IMultiplayerConnectorSocketEventUser {
 
-    MultiplayerWaitingRoom _ParentActivity;
+    MultiplayerWaitingRoomActivity _MultiplayerWaitingRoomActivity;
+    MultiPlayerConnector _MultiplayerConnector;
     private static final String TAG = SelectPublicOrPrivateFragment.class.getSimpleName();
 
         public SelectPublicOrPrivateFragment() {
@@ -34,56 +31,31 @@ public class SelectPublicOrPrivateFragment extends Fragment implements IMultipla
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        _ParentActivity=(MultiplayerWaitingRoom)getActivity();
+        _MultiplayerConnector = MultiPlayerConnector.get_Instance();
+        _MultiplayerWaitingRoomActivity =(MultiplayerWaitingRoomActivity)getActivity();
 
         Button joinPrivateButton = view.findViewById(R.id.privateButton);
-
         Button joinPublicButton = view.findViewById(R.id.publicButton);
 
-        joinPrivateButton.setOnClickListener(v -> {
-            //p2psocket.emit('private-game-room-request', {numPlayersRequiredForGame:2, gameType: 'fives'})
-            //_ParentActivity._MultiPlayerConnector.joinToPublicGame(2, _ParentActivity._GameType);
-            Bundle result = new Bundle();
-            result.putString("fragmentClassName", PrivateGameOptionsFragment.class.getCanonicalName());
-            // The child fragment needs to still set the result on its parent fragment manager
-            getParentFragmentManager().setFragmentResult("changeFragment", result);
-        });
-
-        joinPublicButton.setOnClickListener(v -> joinToPublicGame());
-
+        joinPrivateButton.setOnClickListener(v -> privateGameSelected());
+        joinPublicButton.setOnClickListener(v -> toPublicGameWaitingRoomFragment());
 
     }
 
-
-    private void joinToPublicGame(){
-
-        JSONObject obj = new JSONObject();
-        try {
-            obj.put("minPlayersRequiredForGame", MultiplayerWaitingRoom._MinNumPlayersRequiredForGame);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        try {
-            obj.put("gameType", MultiplayerWaitingRoom._GameType);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        MultiPlayerConnector._EmitObject=obj;
-
-        Bundle publicGameRoomRequestBundle = new Bundle();
-        publicGameRoomRequestBundle.putString("eventName", ServerConfig.publicGameRoomRequest);
-        publicGameRoomRequestBundle.putBoolean(MultiPlayerConnector.emitWithObjectString, true);
+    private void privateGameSelected(){
+        //p2psocket.emit('private-game-room-request', {numPlayersRequiredForGame:2, gameType: 'fives'})
+        //_ParentActivity._MultiPlayerConnector.joinToPublicGame(2, _ParentActivity._GameType);
+        Bundle result = new Bundle();
+        result.putString("fragmentClassName", PrivateGameOptionsFragment.class.getCanonicalName());
         // The child fragment needs to still set the result on its parent fragment manager
-        getParentFragmentManager().setFragmentResult("emitEvent", publicGameRoomRequestBundle);
+        getParentFragmentManager().setFragmentResult("changeFragment", result);
+    }
 
-        Bundle getNumPlayersBundle = new Bundle();
-        getNumPlayersBundle.putString("eventName", ServerConfig.getNumActivePlayers);
-        // The child fragment needs to still set the result on its parent fragment manager
-        getParentFragmentManager().setFragmentResult("emitEvent", getNumPlayersBundle);
 
-        Log.d(TAG, "requesting public game room");
+    private void toPublicGameWaitingRoomFragment(){
 
+
+        //go to waiting room
         Bundle result = new Bundle();
         result.putString("fragmentClassName", PublicGameWaitingRoom.class.getCanonicalName());
         // The child fragment needs to still set the result on its parent fragment manager
@@ -96,7 +68,7 @@ public class SelectPublicOrPrivateFragment extends Fragment implements IMultipla
 
 
     public static void AddSocketEvents(Socket socket, MultiPlayerConnector multiPlayerConnector){
-
+     //no events needed by this Fragment
     }
 
 }

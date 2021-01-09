@@ -23,11 +23,18 @@ import static io.socket.client.Socket.EVENT_DISCONNECT;
 
 public class MultiPlayerConnector extends Observable {
     private static final String TAG = "MultiPlayerConnector";
+
+    private static MultiPlayerConnector _Instance = null;
+
     private String serverUrl = (BuildConfig.DEBUG) ? ServerConfig.ServerURLDebug : ServerConfig.ServerURLProduction;
     private Socket _Socket;
 
-    static JSONObject _EmitObject;
-    public static final String emitWithObjectString="emitWithObject";
+    public boolean Connected (){
+        return (_Socket!=null) ? false: _Socket.connected();
+    }
+
+    //static JSONObject _EmitObject;
+    //public static final String emitWithObjectString="emitWithObject";
 
 
     public int _NumberActivePublicPlayers;
@@ -42,42 +49,72 @@ public class MultiPlayerConnector extends Observable {
 
 
     private JSONArray _TurnStunServers;
-    public MultiPlayerConnector(){
-
-        connectToSignallingServer();
-
+    private MultiPlayerConnector()  {
 
     }
 
-    private void connectToSignallingServer() {
-        try {
-            IO.Options opts = new IO.Options();
-            opts.transports = new String[] { WebSocket.NAME };
-            _Socket = IO.socket(serverUrl); //put url in config resource file
+    public static MultiPlayerConnector get_Instance() {
+        if (_Instance == null)
+            _Instance = new MultiPlayerConnector();
 
-            PublicGameWaitingRoom.AddSocketEvents(_Socket,this);
-            JoinPrivateGameFragment.AddSocketEvents(_Socket,this);
-            CreatePrivateGameFragment.AddSocketEvents(_Socket,this);
+        return _Instance;
+    }
 
-            _Socket.on(EVENT_CONNECT,  args-> {
-                    //JSONObject obj = (JSONObject)args[0];
-                    Log.d(TAG, "Connected to server");
-                }).on("public-game-room-request", args -> {
-                Log.d(TAG, "requesting public game room");
-            }).on(EVENT_CONNECT_ERROR, args ->{
-                Log.d(TAG,"failed to connect:");
-                for(int i =0; i<args.length; i++){
-                    Log.d(TAG,args[i].toString());
-                }
-            }).on("token-offer", args -> {
-                Log.d(TAG, "tokens for twilio recieved");
-                _TurnStunServers = (JSONArray)args[0];
-            }).on(ServerConfig.peerMsg, args -> {
-                Log.d(TAG, "peer message");
-                this.msg=((JSONObject)args[0]).opt("textVal").toString();
-                setChanged();
-                notifyObservers(ServerConfig.peerMsg);
-            });/*.on("ipaddr", args -> {
+    /**
+     * Call this method to connected to the Socket.io Server associated with your game. Uses url placed in ServerConfig.ServerURLProduction or ServerConfig.ServerURLDebug
+     * @throws URISyntaxException
+     */
+     public void connectToSignallingServer() throws URISyntaxException {
+         if (_Socket ==null){
+             _Socket = IO.socket(serverUrl); //initialize here because we don't want to do it in the constructor
+             configureSocketEvents();
+         }
+
+        if (!_Socket.connected()) {
+                _Socket.connect();
+
+        }
+
+    }
+
+
+    private void configureSocketEvents(){
+
+        IO.Options opts = new IO.Options();
+        opts.transports = new String[]{WebSocket.NAME};
+
+
+
+        PublicGameWaitingRoom.AddSocketEvents(_Socket, this);
+        JoinPrivateGameFragment.AddSocketEvents(_Socket, this);
+        CreatePrivateGameFragment.AddSocketEvents(_Socket, this);
+
+        _Socket.on(EVENT_CONNECT, args -> {
+            //JSONObject obj = (JSONObject)args[0];
+            Log.d(TAG, "Connected to server");
+
+        }).on("public-game-room-request", args -> {
+            Log.d(TAG, "requesting public game room");
+        }).on(EVENT_CONNECT_ERROR, args -> {
+            Log.d(TAG, "failed to connect:");
+            for (int i = 0; i < args.length; i++) {
+                Log.d(TAG, args[i].toString());
+
+            }
+            notifyObservers("EVENT_CONNECT_ERROR");
+
+        }).on("token-offer", args -> {
+            Log.d(TAG, "tokens for twilio recieved");
+            _TurnStunServers = (JSONArray) args[0];
+        }).on(ServerConfig.peerMsg, args -> {
+            Log.d(TAG, "peer message");
+            this.msg = ((JSONObject) args[0]).opt("textVal").toString();
+            setChanged();
+            notifyObservers(ServerConfig.peerMsg);
+        }).on(EVENT_DISCONNECT, args -> {
+            Log.d(TAG, "socket.io socket disconnected");
+
+        });/*.on("ipaddr", args -> {
                 Log.d(TAG, "connectToSignallingServer: ipaddr");
             }).on("created", args -> {
                 Log.d(TAG, "connectToSignallingServer: created");
@@ -133,11 +170,11 @@ public class MultiPlayerConnector extends Observable {
                 Log.d(TAG, "connectToSignallingServer: disconnect");
             });*/
 
+        _Socket.on(ServerConfig.gameReadyToPlay, args -> {
+            Log.d(TAG, "starting Public game");
+            notifyObservers(ServerConfig.gameReadyToPlay);
+        });
 
-            _Socket.connect();
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
     }
 
 
@@ -150,12 +187,12 @@ public class MultiPlayerConnector extends Observable {
 
 
 
-    public void emitEvent(String emitEvent, boolean emitWithObject) {
+    /*public void emitEvent(String emitEvent, boolean emitWithObject) {
         if (emitWithObject){
             _Socket.emit(emitEvent,_EmitObject);
         }
         else _Socket.emit(emitEvent);
-    }
+    }*/
 
     public void emitEvent(String emitEvent, JSONObject obj) {
 
@@ -166,6 +203,16 @@ public class MultiPlayerConnector extends Observable {
     public void emitEvent(String emitEvent) {
 
         _Socket.emit(emitEvent);
+
+
+    }
+
+    /**
+     * Closes the socket.io socket.
+     */
+    public void Close(){
+
+        _Socket.disconnect();
 
     }
 }

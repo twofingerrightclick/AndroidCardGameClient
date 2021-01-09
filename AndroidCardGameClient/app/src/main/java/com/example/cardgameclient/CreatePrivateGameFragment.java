@@ -12,17 +12,26 @@ import androidx.fragment.app.Fragment;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Observable;
+import java.util.Observer;
+
 import io.socket.client.Socket;
 
-public class CreatePrivateGameFragment extends Fragment {
+public class CreatePrivateGameFragment extends Fragment implements IMultiplayerConnectorSocketEventUser{
     public CreatePrivateGameFragment() {
         super(R.layout.fragment_create_private_game);
+        _MultiPlayerConnector.addObserver(_MultiPlayerConnectorObserver);
     }
 
     private static final String TAG = CreatePrivateGameFragment.class.getSimpleName();
 
+    MultiPlayerConnector _MultiPlayerConnector= MultiPlayerConnector.get_Instance();
+    MultiplayerWaitingRoomActivity _MultiplayerWaitingRoomActivity = (MultiplayerWaitingRoomActivity) getActivity();
+
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+
 
         Button createButton = view.findViewById(R.id.createButton);
 
@@ -37,12 +46,6 @@ public class CreatePrivateGameFragment extends Fragment {
 
                 if(emitCreatePrivateGame(playerNameInput)) {
 
-                  /*  Bundle result = new Bundle();
-                    result.putString("fragmentClassName", PrivateGameWaitingRoomFragment.class.getCanonicalName());
-                    result.putBoolean("gameCreator", true);
-                    // The child fragment needs to still set the result on its parent fragment manager
-                    getParentFragmentManager().setFragmentResult("changeFragment", result);*/
-
                 }
                 else{
                     createButton.setClickable(true);
@@ -55,32 +58,62 @@ public class CreatePrivateGameFragment extends Fragment {
 
     }
 
+    /**
+     * if Player name is valid, emits a privateGameRoomRequest, else returns false
+     * @param playerNameTextInput
+     * @return
+     */
     private boolean emitCreatePrivateGame(TextView playerNameTextInput) {
         String playerName = playerNameTextInput.getText().toString();
 
         if (playerName.isEmpty()) {
-
-            ((MultiplayerWaitingRoom)getActivity()).badInput("Player name cannot be empty");
+            _MultiplayerWaitingRoomActivity.badInputDialog("Player name cannot be empty");
             return false;
         }
 
         JSONObject args = new JSONObject();
         try {
             args.put("playerName", playerName);
-            args.put("minPlayersRequiredForGame",MultiplayerWaitingRoom._MinNumPlayersRequiredForGame);
-            args.put("gameType", MultiplayerWaitingRoom._GameType);
+            args.put("minPlayersRequiredForGame", MultiplayerWaitingRoomActivity._MinNumPlayersRequiredForGame);
+            args.put("gameType", MultiplayerWaitingRoomActivity._GameType);
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
-
-        ((MultiplayerWaitingRoom)getActivity())._MultiPlayerConnector.emitEvent(ServerConfig.privateGameRoomRequest,args);
+          _MultiPlayerConnector.emitEvent(ServerConfig.privateGameRoomRequest,args);
 
 
         return true;
 
     }
 
+
+    private void goToPrivateGameWaitingRoom(){
+        Bundle result = new Bundle();
+                    result.putString("fragmentClassName", InitiatorsPrivateGameWaitingRoomFragment.class.getCanonicalName());
+                    result.putBoolean("gameCreator", true);
+                    // The child fragment needs to still set the result on its parent fragment manager
+                    getParentFragmentManager().setFragmentResult("changeFragment", result);
+    }
+
+
+    private Observer _MultiPlayerConnectorObserver = new Observer() {
+        @Override
+        public void update(Observable o, Object arg) {
+            switch ((String)arg){
+
+                case ServerConfig.privateGameRoomRequestComplete:
+                    goToPrivateGameWaitingRoom();
+                    break;
+                /*case another option:
+                    go to
+                   break;*/
+
+            }
+        }
+    };
+
+    //Implementation of AddSocketEvents from IMultiplayerConnectorSocketEventUser
     static void AddSocketEvents(Socket socket, MultiPlayerConnector multiPlayerConnector){
 
         socket.on(ServerConfig.privateGameRoomRequestComplete, args -> {

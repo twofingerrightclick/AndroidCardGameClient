@@ -13,7 +13,7 @@
         android:usesCleartextTraffic="true"
         android:theme="@style/Theme.CardGameClient">
         <activity
-            android:name=".MultiplayerWaitingRoom"
+            android:name=".MultiplayerWaitingRoomActivity"
             android:label="@string/title_activity_multiplayer_waiting_room"
             android:theme="@style/Theme.CardGameClient.NoActionBar"
             android:parentActivityName=".MainActivity"></activity>

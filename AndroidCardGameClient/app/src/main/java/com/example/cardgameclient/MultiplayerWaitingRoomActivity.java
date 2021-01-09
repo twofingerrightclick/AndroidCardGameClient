@@ -1,5 +1,6 @@
 package com.example.cardgameclient;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 
@@ -13,12 +14,15 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.FragmentResultListener;
 
 import android.os.Handler;
+import android.util.Log;
+import android.view.View;
 import android.widget.TextView;
 
+import java.net.URISyntaxException;
 import java.util.Observable;
 import java.util.Observer;
 
-public class MultiplayerWaitingRoom extends AppCompatActivity implements IPublicGameWaitingRoomFragmentUIEvent, IPrivateGameWaitingRoomFragmentUIEvent, IJoinPrivateGameUIEvent {
+public class MultiplayerWaitingRoomActivity extends AppCompatActivity  {
 
     MultiPlayerConnector _MultiPlayerConnector;
     public Handler _UIHandler;
@@ -28,8 +32,7 @@ public class MultiplayerWaitingRoom extends AppCompatActivity implements IPublic
     String _CurrentFragmentClassName;
 
     String _GameCode="";
-
-
+    private static final String TAG = MultiplayerWaitingRoomActivity.class.getSimpleName();
 
     static class PlayerStatus{
     static boolean _initiator =false;
@@ -49,7 +52,15 @@ public class MultiplayerWaitingRoom extends AppCompatActivity implements IPublic
         setSupportActionBar(toolbar);
         Intent intent = getIntent();
         _GameType = intent.getStringExtra(MainActivity.GAME_TYPE);
-        _MultiPlayerConnector = new MultiPlayerConnector();
+
+
+        _MultiPlayerConnector = MultiPlayerConnector.get_Instance();
+        try {
+            _MultiPlayerConnector.connectToSignallingServer();
+        } catch (URISyntaxException e) {
+           Log.d(TAG, "socket.io server url is malformed. check url in Server.Config");
+           e.printStackTrace();
+        }
         _MultiPlayerConnector.addObserver(_MultiPlayerConnectorObserver);
 
 
@@ -67,7 +78,7 @@ public class MultiplayerWaitingRoom extends AppCompatActivity implements IPublic
     }
 
 
-
+//Delete and just use _MultiplayerWaitingRoomActivity.changeFragment
     private void initializeFragmentResultListeners() {
         getSupportFragmentManager().setFragmentResultListener("changeFragment", this, new FragmentResultListener() {
             @Override
@@ -80,14 +91,7 @@ public class MultiplayerWaitingRoom extends AppCompatActivity implements IPublic
             }
         });
 
-        getSupportFragmentManager().setFragmentResultListener("emitEvent", this, new FragmentResultListener() {
-            @Override
-            public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle bundle) {
-                String eventName = bundle.getString("eventName");
-                boolean emitWithObject = bundle.getBoolean("emitWithObject",false);
-                _MultiPlayerConnector.emitEvent(eventName, emitWithObject);
-            }
-        });
+
     }
 
 
@@ -96,14 +100,13 @@ public class MultiplayerWaitingRoom extends AppCompatActivity implements IPublic
         PlayerStatus._initiator=false;
     }
 
-    protected void changeFragment(String className, Bundle bundle){
+    protected void changeFragment(String className, Bundle bundle ){
         Class fragmentClass = null;
         try {
             fragmentClass = Class.forName(className);
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
-
         getSupportFragmentManager().beginTransaction()
                 .addToBackStack(null)
                 .replace(R.id.fragment_container_view, fragmentClass, bundle)
@@ -114,38 +117,12 @@ public class MultiplayerWaitingRoom extends AppCompatActivity implements IPublic
 
 
 
-    @Override
-    public void OnPrivateRoomJoin() {
-        Bundle result = new Bundle();
-        result.putString("fragmentClassName", PrivateGameWaitingRoomFragment.class.getCanonicalName());
-        result.putBoolean("gameCreator", false);
-        changeFragment(PrivateGameWaitingRoomFragment.class.getCanonicalName(),result);
-    }
 
-    @Override
-    public void OnRoomNotFound() {
-
-        _UIHandler.post(() -> {
-            new AlertDialog.Builder(this)
-                    .setTitle("Unable to find game")
-                    .setMessage("Check with your friend to make sure your game code is still active and correct.")
-                    // Specifying a listener allows you to take an action before dismissing the dialog.
-                    // The dialog is automatically dismissed when a dialog button is clicked.
-                    /* .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                         public void onClick(DialogInterface dialog, int which) {
-                             // Continue with delete operation
-                         }
-                     })*/
-
-                    // A null listener allows the button to dismiss the dialog and take no further action.
-                    .setNegativeButton(android.R.string.ok, null)
-                    .setIcon(android.R.drawable.ic_dialog_alert)
-                    .show();
-        });
-    }
-
-
-    public void badInput(String message) {
+    /**
+     * Displays a warning dialog to the user with passed message as the contents
+     * @param message
+     */
+    public void badInputDialog(String message) {
 
         _UIHandler.post(() -> {
             new AlertDialog.Builder(this)
@@ -167,36 +144,55 @@ public class MultiplayerWaitingRoom extends AppCompatActivity implements IPublic
     }
 
 
-    public void goToPrivateGameWaitingRoom() {
 
-        Bundle bundle = new Bundle();
-        bundle.putBoolean("gameCreator", true);
-        changeFragment(PrivateGameWaitingRoomFragment.class.getCanonicalName(),bundle);
+   /* public void retryConnectionDialog(String message) {
 
         _UIHandler.post(() -> {
-            TextView roomCodeView= findViewById(R.id.gameCodeView);
-            roomCodeView.setText(_MultiPlayerConnector.getRoomCode());
-        });
+            new AlertDialog.Builder(this)
+                    .setTitle("Unable to connect to server")
+                    .setMessage(message)
 
+                    .setPositiveButton("Yes", (dialog, id) -> {
+
+                        retryConnectingToServer();
+                    })
+                    .setNegativeButton("No", (dialog, id) -> {
+                        // if this button is clicked, just close
+                        // the dialog box and do nothing
+                        dialog.cancel();
+                    })
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .show();
+        });
+    }*/
+
+   /* private void retryConnectingToServer(){
+        try {
+            _MultiPlayerConnector.connectToSignallingServer();
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
     }
+*/
+
+
+
 
 
     private Observer _MultiPlayerConnectorObserver = new Observer() {
         @Override
         public void update(Observable o, Object arg) {
             switch ((String)arg){
-                case ServerConfig.privateGameRoomRequestComplete:
-                    goToPrivateGameWaitingRoom();
-                    break;
+
                 case ServerConfig.peerMsg:
                     //addPeerMessage();
                     break;
-                case ServerConfig.numActivePlayers:
-                    updatePublicWaitingRoomActivePlayerCount();
-                    break;
                 case ServerConfig.unableToFindRoom:
-                    OnRoomNotFound();
+                    ///OnRoomNotFound();
                     break;
+               /* case ServerConfig.eventConnectError:
+                    badInputDialog("Unable To Connect To Server WaitingRoomActivity");
+                    break;*/
             }
         }
     };
@@ -213,20 +209,8 @@ public class MultiplayerWaitingRoom extends AppCompatActivity implements IPublic
         });
     }*/
 
-        public void updatePublicWaitingRoomActivePlayerCount() {
 
-        _UIHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                TextView activePlayersTextView= findViewById(R.id.numActivePublicPlayers);
-                activePlayersTextView.setText(_MultiPlayerConnector._NumberActivePublicPlayers);
 
-            }
-        });
-
-    }
-
-    @Override
     public void onGameReadyToPlay() {
 
     }

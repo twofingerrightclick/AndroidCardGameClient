@@ -29,8 +29,15 @@ public class ServerConfig {
     public static final String getNumActivePlayers = "get-num-active-public-players";
     public static final String numActivePlayers = "num-active-public-players";
 
+    public static final String privateGameInitiatorLeftTheGame = "private-game-initiator-left-game";
 
     public static final String peerMsg ="peer-msg";
+
+
+    public static final String joinPrivateGameRoomRequestComplete = "join-private-game-room-request-complete";
+    public static final String privateGameJoiningPlayerLeftTheGame = "private-game-joiner-player-left-game";
+
+    public static final String eventConnectError = "EVENT_CONNECT_ERROR";
 
     //public static final String startGame ="start-game";
 

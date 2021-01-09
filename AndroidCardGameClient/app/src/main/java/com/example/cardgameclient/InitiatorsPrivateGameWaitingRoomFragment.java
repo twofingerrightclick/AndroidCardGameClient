@@ -3,14 +3,11 @@ package com.example.cardgameclient;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.view.KeyEvent;
 import android.view.View;
 import android.widget.TextView;
 
 import androidx.activity.OnBackPressedCallback;
-import androidx.activity.OnBackPressedDispatcher;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 
@@ -24,7 +21,7 @@ public class PrivateGameWaitingRoomFragment extends Fragment {
     String _DefaultFragmentStatusMessage ="Private Game Joined";
     String _CreatorStatusMessage ="Private Game Creator";
     boolean _PlayerIsInitiator=false;
-    MultiplayerWaitingRoom _ParentActivity;
+    MultiplayerWaitingRoomActivity _ParentActivity;
 
 
     @Override
@@ -40,7 +37,7 @@ public class PrivateGameWaitingRoomFragment extends Fragment {
 
             private void showAreYouSureDialog() {
 
-                ((MultiplayerWaitingRoom)getActivity())._UIHandler.post(() -> {
+                ((MultiplayerWaitingRoomActivity)getActivity())._UIHandler.post(() -> {
                     new AlertDialog.Builder(context)
                             .setTitle("Close Game?")
                             .setMessage(getBackButtonMessage())
@@ -72,7 +69,7 @@ public class PrivateGameWaitingRoomFragment extends Fragment {
 
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        _ParentActivity= ((MultiplayerWaitingRoom)getActivity());
+        _ParentActivity= ((MultiplayerWaitingRoomActivity)getActivity());
 
         Bundle extras = getArguments();
 

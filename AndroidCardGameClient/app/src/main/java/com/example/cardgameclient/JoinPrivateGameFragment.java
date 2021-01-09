@@ -7,23 +7,36 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Observable;
+import java.util.Observer;
+
 import io.socket.client.Socket;
 
-public class JoinPrivateGameFragment extends Fragment implements IMultiplayerConnectorEventUser {
+public class JoinPrivateGameFragment extends Fragment implements IMultiplayerConnectorSocketEventUser {
+
+    MultiPlayerConnector _MultiplayerConnector;
+    MultiplayerWaitingRoomActivity _MultiplayerWaitingRoomActivity;
+
     public JoinPrivateGameFragment() {
         super(R.layout.fragment_join_private_game);
+        _MultiplayerConnector= MultiPlayerConnector.get_Instance();
+        _MultiplayerWaitingRoomActivity = (MultiplayerWaitingRoomActivity)getActivity();
+
     }
+
 
     private static final String TAG = JoinPrivateGameFragment.class.getSimpleName();
 
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        _MultiplayerConnector.addObserver(_MultiPlayerConnectorObserver);
 
         TextView playerNameTextInput= view.findViewById(R.id.playerNameInput);
         TextView gameCodeTextInput = view.findViewById(R.id.gameCodeInput);
@@ -46,12 +59,12 @@ public class JoinPrivateGameFragment extends Fragment implements IMultiplayerCon
 
         if (playerName.isEmpty()) {
 
-            ((MultiplayerWaitingRoom)getActivity()).badInput("Player name cannot be empty");
+            _MultiplayerWaitingRoomActivity.badInputDialog("Player name cannot be empty");
             return false;
         }
         if ( gameCode.isEmpty()) {
 
-            ((MultiplayerWaitingRoom)getActivity()).badInput("game code cannot be empty");
+            _MultiplayerWaitingRoomActivity.badInputDialog("game code cannot be empty");
             return false;
         }
 
@@ -62,18 +75,63 @@ public class JoinPrivateGameFragment extends Fragment implements IMultiplayerCon
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        MultiPlayerConnector._EmitObject=args;
-
-        Bundle result = new Bundle();
-        result.putString("eventName", ServerConfig.joinPrivateGameRoom);
-        result.putBoolean(MultiPlayerConnector.emitWithObjectString, true);
-        // The child fragment needs to still set the result on its parent fragment manager
-        getParentFragmentManager().setFragmentResult("emitEvent", result);
-
+        _MultiplayerConnector.emitEvent(ServerConfig.joinPrivateGameRoom, args);
 
         return true;
 
     }
+
+    public void onPrivateRoomJoin() {
+        Bundle result = new Bundle();
+        result.putString("fragmentClassName", JoiningPrivateGameWaitingRoomFragment.class.getCanonicalName());
+        _MultiplayerWaitingRoomActivity.changeFragment(JoiningPrivateGameWaitingRoomFragment.class.getCanonicalName(), result);
+
+    }
+
+
+    public void OnRoomNotFound() {
+
+        _MultiplayerWaitingRoomActivity._UIHandler.post(() -> {
+            new AlertDialog.Builder(_MultiplayerWaitingRoomActivity)
+                    .setTitle("Unable to find game")
+                    .setMessage("Check with your friend to make sure your game code is still active and correct.")
+                    // Specifying a listener allows you to take an action before dismissing the dialog.
+                    // The dialog is automatically dismissed when a dialog button is clicked.
+                    /* .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                         public void onClick(DialogInterface dialog, int which) {
+                             // Continue with delete operation
+                         }
+                     })*/
+
+                    // A null listener allows the button to dismiss the dialog and take no further action.
+                    .setNegativeButton(android.R.string.ok, null)
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .show();
+        });
+    }
+
+
+    private Observer _MultiPlayerConnectorObserver = new Observer() {
+        @Override
+        public void update(Observable o, Object arg) {
+
+
+
+                switch ((String) arg) {
+
+                    case ServerConfig.joinPrivateGameRoomRequestComplete:
+                        onPrivateRoomJoin();
+                        break;
+                    case ServerConfig.unableToFindRoom:
+                        OnRoomNotFound();
+                        break;
+
+                }
+            }
+
+    };
+
+
 
 
     static void AddSocketEvents(Socket socket, MultiPlayerConnector multiPlayerConnector){
