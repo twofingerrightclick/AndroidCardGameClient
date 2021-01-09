@@ -11,17 +11,39 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 
-public class PrivateGameWaitingRoomFragment extends Fragment {
-    public PrivateGameWaitingRoomFragment() {
-        super(R.layout.fragment_private_game_waiting_room);
+import java.util.Observable;
+import java.util.Observer;
+
+public class InitiatorsPrivateGameWaitingRoomFragment extends Fragment {
+    public InitiatorsPrivateGameWaitingRoomFragment() {
+        super(R.layout.fragment_initiators_private_game_waiting_room);
+        _MultiPlayerConnector.addObserver(_MultiPlayerConnectorObserver);
     }
 
-
-
-    String _DefaultFragmentStatusMessage ="Private Game Joined";
     String _CreatorStatusMessage ="Private Game Creator";
-    boolean _PlayerIsInitiator=false;
-    MultiplayerWaitingRoomActivity _ParentActivity;
+
+
+    MultiPlayerConnector _MultiPlayerConnector= MultiPlayerConnector.get_Instance();
+    MultiplayerWaitingRoomActivity _MultiplayerWaitingRoomActivity = (MultiplayerWaitingRoomActivity) getActivity();
+
+    private Observer _MultiPlayerConnectorObserver = new Observer() {
+        @Override
+        public void update(Observable o, Object arg) {
+            switch ((String)arg){
+
+                /*case ServerConfig.:
+                    addNewPlayerToRoomList();
+                    break;*/
+                /*case ServerConfig:
+                    go to
+                   break;*/
+
+            }
+        }
+    };
+
+    private void addNewPlayerToRoomList() {
+    }
 
 
     @Override
@@ -37,10 +59,10 @@ public class PrivateGameWaitingRoomFragment extends Fragment {
 
             private void showAreYouSureDialog() {
 
-                ((MultiplayerWaitingRoomActivity)getActivity())._UIHandler.post(() -> {
+                _MultiplayerWaitingRoomActivity._UIHandler.post(() -> {
                     new AlertDialog.Builder(context)
                             .setTitle("Close Game?")
-                            .setMessage(getBackButtonMessage())
+                            .setMessage("If you leave the game will be deleted")
                             // Specifying a listener allows you to take an action before dismissing the dialog.
                             // The dialog is automatically dismissed when a dialog button is clicked.
                             .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
@@ -64,30 +86,25 @@ public class PrivateGameWaitingRoomFragment extends Fragment {
     }
 
     private void goBackToSelectPrivateOrPublic() {
-        _ParentActivity.changeFragment(SelectPublicOrPrivateFragment.class.getCanonicalName(), null);
+        _MultiPlayerConnector.emitEvent(ServerConfig.privateGameInitiatorLeftTheGame);
+        _MultiplayerWaitingRoomActivity.changeFragment(SelectPublicOrPrivateFragment.class.getCanonicalName(), null);
     }
 
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        _ParentActivity= ((MultiplayerWaitingRoomActivity)getActivity());
+        //Bundle extras = getArguments();
 
-        Bundle extras = getArguments();
+        _MultiplayerWaitingRoomActivity._UIHandler.post(() -> {
+            TextView roomCodeView= _MultiplayerWaitingRoomActivity.findViewById(R.id.gameCodeView);
+            roomCodeView.setText(_MultiPlayerConnector.getRoomCode());
 
-
-        _PlayerIsInitiator= extras.getBoolean("gameCreator");
-
-        if (_PlayerIsInitiator) {
-            TextView statusMessage = view.findViewById(R.id.statusMessage);
+            TextView statusMessage = _MultiplayerWaitingRoomActivity.findViewById(R.id.statusMessage);
             statusMessage.setText(_CreatorStatusMessage);
-        }
+        });
+
+
 
     }
 
-    private String getBackButtonMessage() {
 
-        if (_PlayerIsInitiator){
-             return "If you leave the game will be deleted";
-        }
-        return "If you leave you will have to rejoin the game.";
-    }
 }
