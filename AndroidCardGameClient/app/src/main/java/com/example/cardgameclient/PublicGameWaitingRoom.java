@@ -21,7 +21,7 @@ public class PublicGameWaitingRoom extends MultiplayerWaitingRoomActivityFragmen
     private static final String TAG = PublicGameWaitingRoom.class.getSimpleName();
     public PublicGameWaitingRoom() {
         super(R.layout.fragment_public_game_waiting_room);
-        _MultiPlayerConnectorObserver= multiPlayerConnectorObserver;
+        SetMultiPlayerConnectorObserver(multiPlayerConnectorObserver);
 
     }
 
@@ -49,6 +49,11 @@ public class PublicGameWaitingRoom extends MultiplayerWaitingRoomActivityFragmen
 
     }
 
+    @Override
+    void SetMultiPlayerConnectorObserver(Observer multiPlayerConnectorObserver) {
+        _MultiPlayerConnectorObserver= multiPlayerConnectorObserver;
+    }
+
     private void requestPublicGameRoom() {
         JSONObject obj = new JSONObject();
         try {
@@ -63,8 +68,8 @@ public class PublicGameWaitingRoom extends MultiplayerWaitingRoomActivityFragmen
         }
 
         //emit events
-        _MultiplayerConnector.emitEvent(ServerConfig.publicGameRoomRequest, obj);
-        _MultiplayerConnector.emitEvent(ServerConfig.getNumActivePlayers);
+        _MultiPlayerConnector.emitEvent(ServerConfig.publicGameRoomRequest, obj);
+        _MultiPlayerConnector.emitEvent(ServerConfig.getNumActivePlayers);
 
 
         Log.d(TAG, "requesting public game room");
@@ -105,7 +110,7 @@ public class PublicGameWaitingRoom extends MultiplayerWaitingRoomActivityFragmen
             @Override
             public void run() {
                 TextView activePlayersTextView= _MultiplayerWaitingRoomActivity.findViewById(R.id.numActivePublicPlayers);
-                activePlayersTextView.setText(_MultiplayerConnector._NumberActivePublicPlayers);
+                activePlayersTextView.setText(_MultiPlayerConnector._NumberActivePublicPlayers);
 
             }
         });

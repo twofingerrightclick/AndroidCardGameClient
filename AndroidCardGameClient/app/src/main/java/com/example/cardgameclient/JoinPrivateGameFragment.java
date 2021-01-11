@@ -8,7 +8,6 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
-import androidx.fragment.app.Fragment;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -18,15 +17,13 @@ import java.util.Observer;
 
 import io.socket.client.Socket;
 
-public class JoinPrivateGameFragment extends Fragment implements IMultiplayerConnectorSocketEventUser {
+public class JoinPrivateGameFragment extends MultiplayerWaitingRoomActivityFragment implements IMultiplayerConnectorSocketEventUser {
 
-    MultiPlayerConnector _MultiplayerConnector;
-    MultiplayerWaitingRoomActivity _MultiplayerWaitingRoomActivity;
+
 
     public JoinPrivateGameFragment() {
         super(R.layout.fragment_join_private_game);
-        _MultiplayerConnector= MultiPlayerConnector.get_Instance();
-        _MultiplayerWaitingRoomActivity = (MultiplayerWaitingRoomActivity)getActivity();
+        SetMultiPlayerConnectorObserver(multiPlayerConnectorObserver);
 
     }
 
@@ -36,7 +33,7 @@ public class JoinPrivateGameFragment extends Fragment implements IMultiplayerCon
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        _MultiplayerConnector.addObserver(_MultiPlayerConnectorObserver);
+
 
         TextView playerNameTextInput= view.findViewById(R.id.playerNameInput);
         TextView gameCodeTextInput = view.findViewById(R.id.gameCodeInput);
@@ -51,6 +48,11 @@ public class JoinPrivateGameFragment extends Fragment implements IMultiplayerCon
 
             //getParentFragmentManager().setFragmentResult("setGameCreator", result);
         });
+    }
+
+    @Override
+    void SetMultiPlayerConnectorObserver(Observer multiPlayerConnectorObserver) {
+        _MultiPlayerConnectorObserver=multiPlayerConnectorObserver;
     }
 
     private boolean emitJoinPrivateGame(TextView playerNameTextInput, TextView gameCodeTextInput) {
@@ -75,7 +77,7 @@ public class JoinPrivateGameFragment extends Fragment implements IMultiplayerCon
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        _MultiplayerConnector.emitEvent(ServerConfig.joinPrivateGameRoom, args);
+        _MultiPlayerConnector.emitEvent(ServerConfig.joinPrivateGameRoom, args);
 
         return true;
 
@@ -111,7 +113,7 @@ public class JoinPrivateGameFragment extends Fragment implements IMultiplayerCon
     }
 
 
-    private Observer _MultiPlayerConnectorObserver = new Observer() {
+    private Observer multiPlayerConnectorObserver = new Observer() {
         @Override
         public void update(Observable o, Object arg) {
 

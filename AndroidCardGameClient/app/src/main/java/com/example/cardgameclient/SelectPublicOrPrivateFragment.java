@@ -9,12 +9,13 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import java.util.Observer;
+
 import io.socket.client.Socket;
 
 public class SelectPublicOrPrivateFragment extends Fragment implements IMultiplayerConnectorSocketEventUser {
 
-    MultiplayerWaitingRoomActivity _MultiplayerWaitingRoomActivity;
-    MultiPlayerConnector _MultiplayerConnector;
+
     private static final String TAG = SelectPublicOrPrivateFragment.class.getSimpleName();
 
         public SelectPublicOrPrivateFragment() {
@@ -31,9 +32,6 @@ public class SelectPublicOrPrivateFragment extends Fragment implements IMultipla
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        _MultiplayerConnector = MultiPlayerConnector.get_Instance();
-        _MultiplayerWaitingRoomActivity =(MultiplayerWaitingRoomActivity)getActivity();
-
         Button joinPrivateButton = view.findViewById(R.id.privateButton);
         Button joinPublicButton = view.findViewById(R.id.publicButton);
 
@@ -41,6 +39,7 @@ public class SelectPublicOrPrivateFragment extends Fragment implements IMultipla
         joinPublicButton.setOnClickListener(v -> toPublicGameWaitingRoomFragment());
 
     }
+
 
     private void privateGameSelected(){
         //p2psocket.emit('private-game-room-request', {numPlayersRequiredForGame:2, gameType: 'fives'})

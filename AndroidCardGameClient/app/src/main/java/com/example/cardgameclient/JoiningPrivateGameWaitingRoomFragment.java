@@ -14,17 +14,13 @@ import androidx.fragment.app.Fragment;
 import java.util.Observable;
 import java.util.Observer;
 
-public class JoiningPrivateGameWaitingRoomFragment extends Fragment {
+public class JoiningPrivateGameWaitingRoomFragment extends  MultiplayerWaitingRoomActivityFragment {
     public JoiningPrivateGameWaitingRoomFragment() {
         super(R.layout.fragment_initiators_private_game_waiting_room);
-        _MultiPlayerConnector.addObserver(_MultiPlayerConnectorObserver);
+        SetMultiPlayerConnectorObserver(multiPlayerConnectorObserver);
     }
 
-
-    MultiPlayerConnector _MultiPlayerConnector= MultiPlayerConnector.get_Instance();
-    MultiplayerWaitingRoomActivity _MultiplayerWaitingRoomActivity = (MultiplayerWaitingRoomActivity)getActivity();
-
-    private Observer _MultiPlayerConnectorObserver = new Observer() {
+    private Observer multiPlayerConnectorObserver = new Observer() {
         @Override
         public void update(Observable o, Object arg) {
             switch ((String)arg){
@@ -103,6 +99,11 @@ public class JoiningPrivateGameWaitingRoomFragment extends Fragment {
             statusMessage.setText("Private Game Joined");
 
 
+    }
+
+    @Override
+    void SetMultiPlayerConnectorObserver(Observer multiPlayerConnectorObserver) {
+        _MultiPlayerConnectorObserver=multiPlayerConnectorObserver;
     }
 
     private String getBackButtonMessage() {

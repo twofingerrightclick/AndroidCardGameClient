@@ -14,19 +14,16 @@ import androidx.fragment.app.Fragment;
 import java.util.Observable;
 import java.util.Observer;
 
-public class InitiatorsPrivateGameWaitingRoomFragment extends Fragment {
+public class InitiatorsPrivateGameWaitingRoomFragment extends MultiplayerWaitingRoomActivityFragment {
     public InitiatorsPrivateGameWaitingRoomFragment() {
         super(R.layout.fragment_initiators_private_game_waiting_room);
-        _MultiPlayerConnector.addObserver(_MultiPlayerConnectorObserver);
+
+        SetMultiPlayerConnectorObserver(_multiPlayerConnectorObserver);
     }
 
     String _CreatorStatusMessage ="Private Game Creator";
 
-
-    MultiPlayerConnector _MultiPlayerConnector= MultiPlayerConnector.get_Instance();
-    MultiplayerWaitingRoomActivity _MultiplayerWaitingRoomActivity = (MultiplayerWaitingRoomActivity) getActivity();
-
-    private Observer _MultiPlayerConnectorObserver = new Observer() {
+    private Observer _multiPlayerConnectorObserver = new Observer() {
         @Override
         public void update(Observable o, Object arg) {
             switch ((String)arg){
@@ -104,6 +101,11 @@ public class InitiatorsPrivateGameWaitingRoomFragment extends Fragment {
 
 
 
+    }
+
+    @Override
+    void SetMultiPlayerConnectorObserver(Observer multiPlayerConnectorObserver) {
+        _MultiPlayerConnectorObserver=multiPlayerConnectorObserver;
     }
 
 
