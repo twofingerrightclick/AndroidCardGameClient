@@ -100,7 +100,9 @@ public class CreatePrivateGameFragment extends Fragment implements IMultiplayerC
     private Observer _MultiPlayerConnectorObserver = new Observer() {
         @Override
         public void update(Observable o, Object arg) {
-            switch ((String)arg){
+            SocketIOEventArg socketIOEventArg = (SocketIOEventArg)arg;
+
+            switch (socketIOEventArg._EventName){
 
                 case ServerConfig.privateGameRoomRequestComplete:
                     goToPrivateGameWaitingRoom();
@@ -119,7 +121,8 @@ public class CreatePrivateGameFragment extends Fragment implements IMultiplayerC
         socket.on(ServerConfig.privateGameRoomRequestComplete, args -> {
             Log.d(TAG, "created Room");
             multiPlayerConnector.setRoomCode(((JSONObject)args[0]).opt("gameRoomName").toString());
-            multiPlayerConnector.notifyObservers(ServerConfig.privateGameRoomRequestComplete);
+            SocketIOEventArg socketIOEventArg= new SocketIOEventArg(ServerConfig.privateGameRoomRequestComplete,null);
+            multiPlayerConnector.notifyObservers(socketIOEventArg);
 
         });
 

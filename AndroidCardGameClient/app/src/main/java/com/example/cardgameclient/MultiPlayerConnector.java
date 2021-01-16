@@ -83,8 +83,6 @@ public class MultiPlayerConnector extends Observable {
         IO.Options opts = new IO.Options();
         opts.transports = new String[]{WebSocket.NAME};
 
-
-
         PublicGameWaitingRoom.AddSocketEvents(_Socket, this);
         JoinPrivateGameFragment.AddSocketEvents(_Socket, this);
         CreatePrivateGameFragment.AddSocketEvents(_Socket, this);
@@ -101,16 +99,12 @@ public class MultiPlayerConnector extends Observable {
                 Log.d(TAG, args[i].toString());
 
             }
-            notifyObservers("EVENT_CONNECT_ERROR");
+            notifyObservers(new SocketIOEventArg("EVENT_CONNECT_ERROR",null));
 
         }).on("token-offer", args -> {
             Log.d(TAG, "tokens for twilio recieved");
             _TurnStunServers = (JSONArray) args[0];
-        }).on(ServerConfig.peerMsg, args -> {
-            Log.d(TAG, "peer message");
-            this.msg = ((JSONObject) args[0]).opt("textVal").toString();
-            setChanged();
-            notifyObservers(ServerConfig.peerMsg);
+
         }).on(EVENT_DISCONNECT, args -> {
             Log.d(TAG, "socket.io socket disconnected");
 
@@ -170,9 +164,9 @@ public class MultiPlayerConnector extends Observable {
                 Log.d(TAG, "connectToSignallingServer: disconnect");
             });*/
 
-        _Socket.on(ServerConfig.gameReadyToPlay, args -> {
+        _Socket.on(ServerConfig.publicGameReadyToPlay, args -> {
             Log.d(TAG, "starting Public game");
-            notifyObservers(ServerConfig.gameReadyToPlay);
+            notifyObservers(ServerConfig.publicGameReadyToPlay);
         });
 
     }
@@ -184,6 +178,7 @@ public class MultiPlayerConnector extends Observable {
         super.notifyObservers(arg);
 
     }
+
 
 
 
@@ -215,4 +210,8 @@ public class MultiPlayerConnector extends Observable {
         _Socket.disconnect();
 
     }
+
+
 }
+
+

@@ -9,7 +9,6 @@ import android.widget.TextView;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
-import androidx.fragment.app.Fragment;
 
 import java.util.Observable;
 import java.util.Observer;
@@ -25,9 +24,9 @@ public class JoiningPrivateGameWaitingRoomFragment extends  MultiplayerWaitingRo
         public void update(Observable o, Object arg) {
             switch ((String)arg){
 
-                /*case ServerConfig.newPlayerJoined:
+                case ServerConfig.newPlayerJoinedRoom:
                     addNewPlayerToRoomList();
-                    break;*/
+                    break;
                 /*case another option:
                     go to
                    break;*/
@@ -56,7 +55,7 @@ public class JoiningPrivateGameWaitingRoomFragment extends  MultiplayerWaitingRo
                 _MultiplayerWaitingRoomActivity._UIHandler.post(() -> {
                     new AlertDialog.Builder(context)
                             .setTitle("Close Game?")
-                            .setMessage(getBackButtonMessage())
+                            .setMessage("If you leave you will have to rejoin the game.")
                             // Specifying a listener allows you to take an action before dismissing the dialog.
                             // The dialog is automatically dismissed when a dialog button is clicked.
                             .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
@@ -106,7 +105,5 @@ public class JoiningPrivateGameWaitingRoomFragment extends  MultiplayerWaitingRo
         _MultiPlayerConnectorObserver=multiPlayerConnectorObserver;
     }
 
-    private String getBackButtonMessage() {
-        return "If you leave you will have to rejoin the game.";
-    }
+
 }

@@ -1,8 +1,12 @@
 package com.example.cardgameclient;
 
+import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Bundle;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 
 import android.util.Log;
 import android.view.View;
@@ -27,13 +31,13 @@ public class PublicGameWaitingRoom extends MultiplayerWaitingRoomActivityFragmen
 
     String _DefaultFragmentStatusMessage ="Private Game Joined";
     String _StatusMessage ="Finding An Opponent";
-    //MultiPlayerConnector _MultiplayerConnector;
-    //MultiplayerWaitingRoomActivity _MultiplayerWaitingRoomActivity;
+
 
 
 
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
 
         requestPublicGameRoom();
        /* Bundle extras = getArguments();
@@ -80,17 +84,18 @@ public class PublicGameWaitingRoom extends MultiplayerWaitingRoomActivityFragmen
         @Override
         public void update(Observable o, Object arg) {
 
+            SocketIOEventArg socketIOEventArg = (SocketIOEventArg)arg;
+            switch (socketIOEventArg._EventName){
 
-            switch ((String)arg){
-
-                    case ServerConfig.numActivePlayers:
-                        updatePublicWaitingRoomActivePlayerCount();
+                    case ServerConfig.NUM_ACTIVE_PUBLIC_PLAYERS:
+                        updatePublicWaitingRoomActivePlayerCount(socketIOEventArg._Arg);
                         break;
-                    case ServerConfig.gameReadyToPlay:
+                    case ServerConfig.publicGameReadyToPlay:
                         //go to game
                         break;
                     case ServerConfig.eventConnectError:
-                        _MultiplayerWaitingRoomActivity.badInputDialog("Unable To Connect To Server" + TAG);
+                        _MultiplayerWaitingRoomActivity.changeFragment(SelectPublicOrPrivateFragment.class.getCanonicalName(), null);
+                        //_MultiplayerWaitingRoomActivity.badInputDialog("Unable To Connect To Server" + TAG);
                         //showBadInputDialogForTesting();
                         break;
                 }
@@ -104,31 +109,55 @@ public class PublicGameWaitingRoom extends MultiplayerWaitingRoomActivityFragmen
 
 
 
-    public void updatePublicWaitingRoomActivePlayerCount() {
+    public void updatePublicWaitingRoomActivePlayerCount(Object args) {
+
+       JSONObject arg=(JSONObject)args;
+        int numberOfPlayers= (int)arg.opt("numPlayers");
 
         _MultiplayerWaitingRoomActivity._UIHandler.post(new Runnable() {
             @Override
             public void run() {
-                TextView activePlayersTextView= _MultiplayerWaitingRoomActivity.findViewById(R.id.numActivePublicPlayers);
-                activePlayersTextView.setText(_MultiPlayerConnector._NumberActivePublicPlayers);
+                TextView activePlayersTextView= getActivity().findViewById(R.id.numActivePublicPlayers);
+                activePlayersTextView.setText(""+numberOfPlayers);
+
 
             }
         });
 
     }
 
+    @Override
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+        OnBackPressedCallback callback = new OnBackPressedCallback(
+                true // default to enabled
+        ) {
+            @Override
+            public void handleOnBackPressed() {
+
+                    _MultiPlayerConnector.emitEvent(ServerConfig.public_game_waiting_room_player_left);
+                    _MultiplayerWaitingRoomActivity.changeFragment(SelectPublicOrPrivateFragment.class.getCanonicalName(), null);
+            }
+
+
+        };
+        requireActivity().getOnBackPressedDispatcher().addCallback(
+                this, // LifecycleOwner
+                callback);
+    }
 
 
     public static void AddSocketEvents(Socket socket, MultiPlayerConnector multiPlayerConnector){
 
-        socket.on(ServerConfig.numActivePlayers, args -> {
+        socket.on(ServerConfig.NUM_ACTIVE_PUBLIC_PLAYERS, args -> {
             Log.d(TAG, "num active players received");
-            multiPlayerConnector._NumberActivePublicPlayers=(int)((JSONObject)args[0]).opt("numPlayers");
-            multiPlayerConnector.notifyObservers(ServerConfig.numActivePlayers);
+
+            SocketIOEventArg socketIOEventArg= new SocketIOEventArg(ServerConfig.NUM_ACTIVE_PUBLIC_PLAYERS,args[0]);
+            multiPlayerConnector.notifyObservers(socketIOEventArg);
         });
         socket.on(ServerConfig.publicGameRoomRequestComplete, args -> {
             Log.d(TAG, "public game room found");
-
+            multiPlayerConnector.notifyObservers(new SocketIOEventArg(ServerConfig.publicGameRoomRequestComplete,null));
         });
 
 

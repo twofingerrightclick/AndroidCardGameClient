@@ -34,7 +34,6 @@ public class JoinPrivateGameFragment extends MultiplayerWaitingRoomActivityFragm
         super.onViewCreated(view, savedInstanceState);
 
 
-
         TextView playerNameTextInput= view.findViewById(R.id.playerNameInput);
         TextView gameCodeTextInput = view.findViewById(R.id.gameCodeInput);
 
@@ -117,9 +116,8 @@ public class JoinPrivateGameFragment extends MultiplayerWaitingRoomActivityFragm
         @Override
         public void update(Observable o, Object arg) {
 
-
-
-                switch ((String) arg) {
+            SocketIOEventArg socketIOEventArg = (SocketIOEventArg)arg;
+            switch (socketIOEventArg._EventName){
 
                     case ServerConfig.joinPrivateGameRoomRequestComplete:
                         onPrivateRoomJoin();
@@ -140,7 +138,8 @@ public class JoinPrivateGameFragment extends MultiplayerWaitingRoomActivityFragm
 
         socket.on(ServerConfig.unableToFindRoom, args -> {
             Log.d(TAG, "unable to find room");
-            multiPlayerConnector.notifyObservers(ServerConfig.unableToFindRoom);
+
+            multiPlayerConnector.notifyObservers(new SocketIOEventArg(ServerConfig.unableToFindRoom,null));
 
         });
 

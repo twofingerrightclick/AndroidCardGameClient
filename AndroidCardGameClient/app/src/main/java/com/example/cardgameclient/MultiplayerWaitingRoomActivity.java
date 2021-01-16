@@ -182,17 +182,17 @@ public class MultiplayerWaitingRoomActivity extends AppCompatActivity  {
     private Observer _MultiPlayerConnectorObserver = new Observer() {
         @Override
         public void update(Observable o, Object arg) {
-            switch ((String)arg){
 
-                case ServerConfig.peerMsg:
-                    //addPeerMessage();
-                    break;
+            SocketIOEventArg socketIOEventArg = (SocketIOEventArg)arg;
+            switch (socketIOEventArg._EventName){
+
                 case ServerConfig.unableToFindRoom:
                     ///OnRoomNotFound();
                     break;
-               /* case ServerConfig.eventConnectError:
-                    badInputDialog("Unable To Connect To Server WaitingRoomActivity");
-                    break;*/
+                    case ServerConfig.eventConnectError:
+                        Snackbar.make(findViewById(R.id.multiPlayerWaitingRoomCoordinatorLayout), "Unable To Connect To Server WaitingRoomActivity", Snackbar.LENGTH_LONG)
+                                .show();
+                    break;
             }
         }
     };
