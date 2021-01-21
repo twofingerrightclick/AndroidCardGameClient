@@ -94,9 +94,10 @@ public class PublicGameWaitingRoom extends MultiplayerWaitingRoomActivityFragmen
                         //go to game
                         break;
                     case ServerConfig.eventConnectError:
+                        _MultiplayerWaitingRoomActivity.badInputDialog("Connection to Server Lost");
                         _MultiplayerWaitingRoomActivity.changeFragment(SelectPublicOrPrivateFragment.class.getCanonicalName(), null);
                         //_MultiplayerWaitingRoomActivity.badInputDialog("Unable To Connect To Server" + TAG);
-                        //showBadInputDialogForTesting();
+
                         break;
                 }
 
